@@ -1,9 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Signin: React.FC = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,8 +23,16 @@ const Signin: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error("Sign in failed");
-      alert("Sign in successful!");
+      
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.message || "Sign in failed");
+        return;
+      }
+      
+      const userData = await res.json();
+      login(userData);
+      navigate("/");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -68,9 +80,12 @@ const Signin: React.FC = () => {
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Don't have an account?{" "}
-          <a href="/auth/signup" className="text-blue-600 hover:underline">
+          <button 
+            onClick={() => navigate("/auth/signup")}
+            className="text-blue-600 hover:underline"
+          >
             Sign up
-          </a>
+          </button>
         </p>
       </div>
     </div>

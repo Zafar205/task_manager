@@ -4,6 +4,7 @@ exports.up = function (knex) {
       table.increments('id').primary();
       table.string('email').notNullable().unique();
       table.text('password_hash').notNullable();
+      table.boolean('is_admin').notNullable().defaultTo(false);
     })
     .createTable('teams', (table) => {
       table.increments('id').primary();

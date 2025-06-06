@@ -1,12 +1,20 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Signup: React.FC = () => {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", is_admin: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -14,15 +22,27 @@ const Signup: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      // Replace with your backend API endpoint
       const res = await fetch("/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error("Signup failed");
-      // Redirect or show success
-      alert("Signup successful!");
+      
+      if (!res.ok) {
+        const data = await res.json();
+        if (data.errors && data.errors.length > 0) {
+          setError(data.errors.map((err: any) => err.msg).join(", "));
+        } else if (data.message) {
+          setError(data.message);
+        } else {
+          setError("Signup failed");
+        }
+        return;
+      }
+      
+      const userData = await res.json();
+      login(userData);
+      navigate("/");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -59,6 +79,16 @@ const Signup: React.FC = () => {
               placeholder="••••••••"
             />
           </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="is_admin"
+              checked={form.is_admin}
+              onChange={handleChange}
+              className="mr-2"
+            />
+            <label className="text-sm text-gray-700">Register as Admin</label>
+          </div>
           {error && <div className="text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
@@ -70,9 +100,12 @@ const Signup: React.FC = () => {
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Already have an account?{" "}
-          <a href="/auth/signin" className="text-purple-600 hover:underline">
+          <button 
+            onClick={() => navigate("/auth/signin")}
+            className="text-purple-600 hover:underline"
+          >
             Sign in
-          </a>
+          </button>
         </p>
       </div>
     </div>
