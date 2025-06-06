@@ -8,7 +8,7 @@ const { Pool } = require('pg');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', // adjust for your frontend
+  origin: 'http://localhost:5173',
   credentials: true,
 }));
 app.use(express.json());
@@ -19,19 +19,23 @@ const pool = new Pool({
 });
 
 app.use(session({
-  store: new pgSession({ pool }),
+  store: new pgSession({ 
+    pool,
+    createTableIfMissing: true
+  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Only secure in production
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 24
   }
 }));
 
-// Add this line to use your auth routes
+// Routes
 app.use('/api/users', require('./routes/auth'));
+app.use('/api/teams', require('./routes/teams')); // Add this line
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

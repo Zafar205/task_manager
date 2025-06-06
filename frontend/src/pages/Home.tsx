@@ -1,30 +1,94 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { CreateTeamModal, EditTeamModal, DeleteTeamModal, TeamDetailsModal } from "../components/TeamModals";
+
+interface Team {
+  id: number;
+  name: string;
+  creator_id: number;
+  creator_email?: string;
+}
 
 const Home: React.FC = () => {
   const { user, logout } = useAuth();
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Placeholder data for teams and tasks
-  const teams = [
-    { id: 1, name: "Frontend Team" },
-    { id: 2, name: "Backend Team" },
-  ];
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+
+  // Placeholder data for tasks
   const tasks = [
     { id: 1, title: "Design Login Page", team: "Frontend Team", assignee: "Alice", due: "2025-06-10" },
     { id: 2, title: "API Auth Route", team: "Backend Team", assignee: "Bob", due: "2025-06-12" },
   ];
 
-  // Admin-only actions
+  // Fetch teams from backend
+  const fetchTeams = async () => {
+    try {
+      const res = await fetch('/api/teams', {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTeams(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch teams:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeams();
+  }, []);
+
+  const handleCreateTeam = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleViewTeamDetails = (team: Team) => {
+    setSelectedTeam(team);
+    setShowDetailsModal(true);
+  };
+
+  const handleEditTeam = (team: Team) => {
+    setSelectedTeam(team);
+    setShowDetailsModal(false); // Close details modal
+    setShowEditModal(true);
+  };
+
+  const handleDeleteTeam = (team: Team) => {
+    setSelectedTeam(team);
+    setShowDetailsModal(false); // Close details modal
+    setShowDeleteModal(true);
+  };
+
+  const handleTeamCreated = () => {
+    fetchTeams();
+  };
+
+  const handleTeamUpdated = () => {
+    fetchTeams();
+  };
+
+  const handleTeamDeleted = () => {
+    fetchTeams();
+  };
+
+  // Simplified Admin Actions (removed Create Task and Add Members)
   const AdminActions = () => (
     <div className="flex flex-col sm:flex-row gap-4 mb-8">
-      <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition">
+      <button 
+        onClick={handleCreateTeam}
+        className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
+      >
         + Create Team
-      </button>
-      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
-        + Create Task
-      </button>
-      <button className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition">
-        + Add Team Members
       </button>
     </div>
   );
@@ -71,24 +135,41 @@ const Home: React.FC = () => {
                 {user?.is_admin ? "All Teams" : "My Teams"}
               </h2>
               {user?.is_admin && (
-                <button className="text-purple-600 hover:text-purple-800 text-sm">
-                  Manage Teams
+                <button 
+                  onClick={handleCreateTeam}
+                  className="text-purple-600 hover:text-purple-800 text-sm"
+                >
+                  + Add Team
                 </button>
               )}
             </div>
-            <ul>
-              {teams.map((team) => (
-                <li key={team.id} className="py-2 border-b last:border-b-0 flex justify-between items-center">
-                  <span className="font-medium">{team.name}</span>
-                  {user?.is_admin && (
-                    <div className="flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
-                      <button className="text-red-600 hover:text-red-800 text-sm">Delete</button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+            
+            {loading ? (
+              <div className="text-center py-4">Loading teams...</div>
+            ) : (
+              <ul>
+                {teams.length > 0 ? (
+                  teams.map((team) => (
+                    <li key={team.id} className="py-2 border-b last:border-b-0 flex justify-between items-center">
+                      <div 
+                        className="flex flex-col cursor-pointer flex-1"
+                        onClick={() => handleViewTeamDetails(team)}
+                      >
+                        <span className="font-medium hover:text-purple-600 transition">{team.name}</span>
+                        {team.creator_email && (
+                          <span className="text-xs text-gray-500">Created by: {team.creator_email}</span>
+                        )}
+                      </div>
+                      
+                    </li>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No teams found. {user?.is_admin && "Create your first team!"}
+                  </div>
+                )}
+              </ul>
+            )}
           </section>
 
           {/* Task List - Different view for admin vs user */}
@@ -106,8 +187,9 @@ const Home: React.FC = () => {
                 {user?.is_admin && (
                   <select className="border px-2 py-1 rounded text-sm">
                     <option>All Teams</option>
-                    <option>Frontend Team</option>
-                    <option>Backend Team</option>
+                    {teams.map(team => (
+                      <option key={team.id} value={team.id}>{team.name}</option>
+                    ))}
                   </select>
                 )}
               </div>
@@ -135,30 +217,34 @@ const Home: React.FC = () => {
           </section>
         </div>
 
-        {/* Admin-only Statistics Section */}
-        {user?.is_admin && (
-          <section className="mt-8 bg-white rounded-xl shadow p-6">
-            <h2 className="text-xl font-bold text-gray-700 mb-4">Admin Dashboard</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <h3 className="text-2xl font-bold text-purple-700">2</h3>
-                <p className="text-purple-600">Total Teams</p>
-              </div>
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <h3 className="text-2xl font-bold text-blue-700">5</h3>
-                <p className="text-blue-600">Total Users</p>
-              </div>
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <h3 className="text-2xl font-bold text-green-700">8</h3>
-                <p className="text-green-600">Active Tasks</p>
-              </div>
-              <div className="bg-yellow-100 p-4 rounded-lg text-center">
-                <h3 className="text-2xl font-bold text-yellow-700">3</h3>
-                <p className="text-yellow-600">Overdue Tasks</p>
-              </div>
-            </div>
-          </section>
-        )}
+        {/* Modals */}
+        <CreateTeamModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onTeamCreated={handleTeamCreated}
+        />
+        
+        <TeamDetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+          team={selectedTeam}
+          onEdit={handleEditTeam}
+          onDelete={handleDeleteTeam}
+        />
+        
+        <EditTeamModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          team={selectedTeam}
+          onTeamUpdated={handleTeamUpdated}
+        />
+        
+        <DeleteTeamModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          team={selectedTeam}
+          onTeamDeleted={handleTeamDeleted}
+        />
       </div>
     </div>
   );
