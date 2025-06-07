@@ -35,11 +35,37 @@ const getUserTeams = async (userId) => {
     .orWhere('teams.creator_id', userId);
 };
 
+// New functions for team members
+const getTeamMembers = async (teamId) => {
+  return knex('memberships')
+    .select('users.id', 'users.email')
+    .join('users', 'memberships.user_id', 'users.id')
+    .where('memberships.team_id', teamId);
+};
+
+const addTeamMembers = async (teamId, userIds) => {
+  const memberships = userIds.map(userId => ({
+    team_id: teamId,
+    user_id: userId
+  }));
+  
+  return knex('memberships').insert(memberships);
+};
+
+const removeTeamMember = async (teamId, userId) => {
+  return knex('memberships')
+    .where({ team_id: teamId, user_id: userId })
+    .del();
+};
+
 module.exports = { 
   createTeam, 
   getAllTeams, 
   getTeamById, 
   updateTeam, 
   deleteTeam, 
-  getUserTeams 
+  getUserTeams,
+  getTeamMembers,
+  addTeamMembers,
+  removeTeamMember
 };

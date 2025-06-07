@@ -5,7 +5,10 @@ const {
   getTeamById, 
   updateTeam, 
   deleteTeam, 
-  getUserTeams 
+  getUserTeams,
+  getTeamMembers,
+  addTeamMembers,
+  removeTeamMember
 } = require('../models/teams');
 
 exports.getTeams = async (req, res) => {
@@ -90,6 +93,67 @@ exports.deleteTeam = async (req, res) => {
     res.json({ message: 'Team deleted successfully' });
   } catch (err) {
     console.error('Delete team error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// New member management functions
+exports.getTeamMembers = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const members = await getTeamMembers(id);
+    res.json(members);
+  } catch (err) {
+    console.error('Get team members error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.addTeamMembers = async (req, res) => {
+  const { id } = req.params;
+  const { userIds } = req.body;
+  
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ message: 'userIds array is required' });
+    }
+
+    await addTeamMembers(id, userIds);
+    res.json({ message: 'Members added successfully' });
+  } catch (err) {
+    console.error('Add team members error:', err);
+    if (err.code === '23505') { // Duplicate key error
+      res.status(400).json({ message: 'One or more users are already members of this team' });
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
+};
+
+exports.removeTeamMember = async (req, res) => {
+  const { id, userId } = req.params;
+  
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const deleted = await removeTeamMember(id, userId);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Member not found in team' });
+    }
+    res.json({ message: 'Member removed successfully' });
+  } catch (err) {
+    console.error('Remove team member error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

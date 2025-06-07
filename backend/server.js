@@ -35,7 +35,8 @@ app.use(session({
 
 // Routes
 app.use('/api/users', require('./routes/auth'));
-app.use('/api/teams', require('./routes/teams')); // Add this line
+app.use('/api/teams', require('./routes/teams'));
+app.use('/api/tasks', require('./routes/tasks'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

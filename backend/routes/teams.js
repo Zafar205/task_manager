@@ -34,4 +34,16 @@ router.put(
 
 router.delete('/:id', teamController.deleteTeam);
 
+// Team members routes
+router.get('/:id/members', teamController.getTeamMembers);
+router.post(
+  '/:id/members',
+  [
+    body('userIds').isArray({ min: 1 }).withMessage('userIds must be a non-empty array'),
+    body('userIds.*').isNumeric().withMessage('Each user ID must be a number'),
+  ],
+  teamController.addTeamMembers
+);
+router.delete('/:id/members/:userId', teamController.removeTeamMember);
+
 module.exports = router;
