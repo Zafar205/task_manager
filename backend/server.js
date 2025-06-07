@@ -12,29 +12,36 @@ const app = express();
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://task-manager-1-s53n.onrender.com', // Your actual frontend URL
+        'https://task-manager-1-s53n.onrender.com', // Your frontend URL
+        'https://task-manager-gx8h.onrender.com', // Your backend URL (allow self)
         /\.onrender\.com$/ // Allow any onrender.com subdomain
       ]
     : ['http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
 
-// Serve static files with correct MIME types
-app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    }
-    if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
-  }
-}));
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Remove static file serving if you're using separate frontend deployment
+// app.use(express.static(path.join(__dirname, 'public'), {
+//   setHeaders: (res, path) => {
+//     if (path.endsWith('.css')) {
+//       res.setHeader('Content-Type', 'text/css');
+//     }
+//     if (path.endsWith('.js')) {
+//       res.setHeader('Content-Type', 'application/javascript');
+//     }
+//   }
+// }));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -62,6 +69,15 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Debug CORS endpoint
+app.get('/debug-cors', (req, res) => {
+  res.json({
+    origin: req.headers.origin,
+    headers: req.headers,
+    cors_allowed_origins: corsOptions.origin
+  });
+});
+
 // Routes
 app.use('/api/users', require('./routes/auth'));
 app.use('/api/teams', require('./routes/teams'));
@@ -82,4 +98,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`CORS origins:`, corsOptions.origin);
 });
