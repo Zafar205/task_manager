@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/api';
 
 const Signup: React.FC = () => {
   const [form, setForm] = useState({ email: "", password: "", is_admin: false });
@@ -22,7 +23,7 @@ const Signup: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/users/register", {
+      const res = await fetch(`${API_BASE_URL}/api/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

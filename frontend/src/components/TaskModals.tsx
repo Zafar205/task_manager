@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { API_BASE_URL } from '../config/api';
 
 interface Task {
   id: number;
@@ -64,7 +65,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/users', {
+      const res = await fetch(`${API_BASE_URL}/api/users`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -96,7 +97,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
       };
 
-      const res = await fetch('/api/tasks', {
+      const res = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData),
@@ -240,7 +241,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/users', {
+      const res = await fetch(`${API_BASE_URL}/api/users`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -273,7 +274,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
       };
 
-      const res = await fetch(`/api/tasks/${task.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData),
@@ -397,7 +398,7 @@ export const DeleteTaskModal: React.FC<DeleteTaskModalProps> = ({
     setError('');
 
     try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
         method: 'DELETE',
         credentials: 'include'
       });

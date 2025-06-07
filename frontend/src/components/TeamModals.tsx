@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { CreateTaskModal } from './TaskModals';
+import { API_BASE_URL } from '../config/api';
 
 interface Team {
   id: number;
@@ -52,7 +53,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
     setError('');
 
     try {
-      const res = await fetch('/api/teams', {
+      const res = await fetch(`${API_BASE_URL}/api/teams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: teamName }),
@@ -138,7 +139,7 @@ export const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
     setLoading(true);
     try {
       // Fetch team tasks
-      const tasksRes = await fetch(`/api/tasks?team_id=${team.id}`, {
+      const tasksRes = await fetch(`${API_BASE_URL}/api/tasks?team_id=${team.id}`, {
         credentials: 'include'
       });
       if (tasksRes.ok) {
@@ -147,7 +148,7 @@ export const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
       }
 
       // Fetch team members (you'll need to implement this endpoint)
-      const membersRes = await fetch(`/api/teams/${team.id}/members`, {
+      const membersRes = await fetch(`${API_BASE_URL}/api/teams/${team.id}/members`, {
         credentials: 'include'
       });
       if (membersRes.ok) {
@@ -375,7 +376,7 @@ export const AddMembersModal: React.FC<AddMembersModalProps> = ({
 
   const fetchAvailableUsers = async () => {
     try {
-      const res = await fetch('/api/users', {
+      const res = await fetch(`${API_BASE_URL}/api/users`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -409,7 +410,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   try {
     console.log('Sending request:', { userIds: selectedUsers }); // Debug log
 
-    const res = await fetch(`/api/teams/${teamId}/members`, {
+    const res = await fetch(`${API_BASE_URL}/api/teams/${teamId}/members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userIds: selectedUsers }),
@@ -507,7 +508,7 @@ export const EditTeamModal: React.FC<EditTeamModalProps> = ({
     setError('');
 
     try {
-      const res = await fetch(`/api/teams/${team.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: teamName }),
@@ -582,7 +583,7 @@ export const DeleteTeamModal: React.FC<DeleteTeamModalProps> = ({
     setError('');
 
     try {
-      const res = await fetch(`/api/teams/${team.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}`, {
         method: 'DELETE',
         credentials: 'include'
       });

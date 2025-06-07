@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { CreateTeamModal, EditTeamModal, DeleteTeamModal, TeamDetailsModal } from "../components/TeamModals";
 import { EditTaskModal, DeleteTaskModal } from "../components/TaskModals";
+import { API_BASE_URL } from '../config/api';
 
 interface Team {
   id: number;
@@ -47,7 +48,7 @@ const Home: React.FC = () => {
   // Fetch teams from backend
   const fetchTeams = async () => {
     try {
-      const res = await fetch('/api/teams', {
+      const res = await fetch(`${API_BASE_URL}/api/teams`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -66,8 +67,8 @@ const Home: React.FC = () => {
     try {
       setTasksLoading(true);
       const url = selectedTeamFilter 
-        ? `/api/tasks?team_id=${selectedTeamFilter}`
-        : '/api/tasks';
+        ? `${API_BASE_URL}/api/tasks?team_id=${selectedTeamFilter}`
+        : `${API_BASE_URL}/api/tasks`;
       
       const res = await fetch(url, {
         credentials: 'include'
