@@ -22,8 +22,20 @@ const updateTeam = async (id, name) => {
   return knex('teams').where({ id }).update({ name }).returning(['id', 'name', 'creator_id']);
 };
 
+// Updated deleteTeam function with cascading deletes
 const deleteTeam = async (id) => {
-  return knex('teams').where({ id }).del();
+  return await knex.transaction(async (trx) => {
+    // First, delete all memberships for this team
+    await trx('memberships').where('team_id', id).del();
+    
+    // Then, delete all tasks for this team
+    await trx('tasks').where('team_id', id).del();
+    
+    // Finally, delete the team itself
+    const result = await trx('teams').where({ id }).del();
+    
+    return result;
+  });
 };
 
 const getUserTeams = async (userId) => {

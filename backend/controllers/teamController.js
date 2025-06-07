@@ -78,6 +78,7 @@ exports.updateTeam = async (req, res) => {
   }
 };
 
+// Updated deleteTeam function with better error handling
 exports.deleteTeam = async (req, res) => {
   const { id } = req.params;
   
@@ -86,14 +87,27 @@ exports.deleteTeam = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    console.log(`Attempting to delete team with ID: ${id}`);
+    
     const deleted = await deleteTeam(id);
+    console.log(`Delete result: ${deleted}`);
+    
     if (!deleted) {
       return res.status(404).json({ message: 'Team not found' });
     }
-    res.json({ message: 'Team deleted successfully' });
+    
+    res.json({ message: 'Team and all related data deleted successfully' });
   } catch (err) {
     console.error('Delete team error:', err);
-    res.status(500).json({ message: 'Server error' });
+    
+    // Handle specific database constraint errors
+    if (err.code === '23503') {
+      res.status(400).json({ 
+        message: 'Cannot delete team due to existing dependencies. Please try again.' 
+      });
+    } else {
+      res.status(500).json({ message: 'Server error while deleting team' });
+    }
   }
 };
 
