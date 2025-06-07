@@ -134,7 +134,7 @@ const Home: React.FC = () => {
 
   const handleTeamDeleted = () => {
     fetchTeams();
-    fetchTasks(); // Refresh tasks as they might be affected
+    fetchTasks();
   };
 
   const handleTaskUpdated = () => {
@@ -214,12 +214,11 @@ const Home: React.FC = () => {
   // Regular user actions
   const UserActions = () => (
     <div className="flex flex-col sm:flex-row gap-4 mb-8">
-      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
-        View My Tasks
-      </button>
-      <button className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition">
-        Update Task Status
-      </button>
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <p className="text-blue-800 text-sm">
+          <strong>Welcome!</strong> You can view tasks assigned to you and teams you're part of. You can't create or edit anything
+        </p>
+      </div>
     </div>
   );
 
@@ -292,7 +291,10 @@ const Home: React.FC = () => {
                     ))
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      No teams found. {user?.is_admin && "Create your first team!"}
+                      {user?.is_admin ? 
+                        "No teams found. Create your first team!" :
+                        "You're not part of any teams yet. Contact an admin to be added to a team."
+                      }
                     </div>
                   )}
                 </ul>
@@ -304,7 +306,7 @@ const Home: React.FC = () => {
           <section className="bg-white rounded-xl shadow p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <h2 className="text-xl font-bold text-blue-700">
-                {user?.is_admin ? "All Tasks" : "My Tasks"}
+                {user?.is_admin ? "All Tasks" : "My Assigned Tasks"}
               </h2>
               <div className="flex flex-col sm:flex-row gap-2">
                 {/* Enhanced Search Input */}
@@ -426,7 +428,9 @@ const Home: React.FC = () => {
                           </button>
                         </div>
                       ) : (
-                        'No tasks found. Create tasks from team details!'
+                        user?.is_admin ? 
+                          'No tasks found. Create tasks from team details!' :
+                          'No tasks assigned to you yet.'
                       )}
                     </div>
                   )}
@@ -472,7 +476,7 @@ const Home: React.FC = () => {
           task={selectedTask}
           onTaskUpdated={handleTaskUpdated}
         />
-        
+
         <DeleteTaskModal
           isOpen={showDeleteTaskModal}
           onClose={() => setShowDeleteTaskModal(false)}

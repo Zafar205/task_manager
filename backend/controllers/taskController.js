@@ -15,12 +15,25 @@ exports.getTasks = async (req, res) => {
     }
 
     const { team_id } = req.query;
-    
     let tasks;
-    if (team_id) {
-      tasks = await getTasksByTeam(team_id);
+
+    // Check if user is admin
+    if (req.session.isAdmin) {
+      // Admin can see all tasks or filter by team
+      if (team_id) {
+        tasks = await getTasksByTeam(team_id);
+      } else {
+        tasks = await getAllTasks();
+      }
     } else {
-      tasks = await getAllTasks();
+      // Regular users can only see their assigned tasks
+      if (team_id) {
+        // Get user's tasks for a specific team they're part of
+        tasks = await getTasksByUserAndTeam(req.session.userId, team_id);
+      } else {
+        // Get all tasks assigned to this user
+        tasks = await getTasksByUser(req.session.userId);
+      }
     }
     
     res.json(tasks);
@@ -41,6 +54,11 @@ exports.createTask = async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Only admins can create tasks
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can create tasks' });
     }
 
     const [task] = await createTask(title, description, due_date, team_id, assigned_to);
@@ -65,6 +83,11 @@ exports.updateTask = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    // Only admins can update tasks
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can update tasks' });
+    }
+
     const [task] = await updateTask(id, updates);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -82,6 +105,11 @@ exports.deleteTask = async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Only admins can delete tasks
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can delete tasks' });
     }
 
     const deleted = await deleteTask(id);

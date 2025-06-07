@@ -20,7 +20,17 @@ exports.getTeams = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized - No session found' });
     }
 
-    const teams = await getAllTeams();
+    let teams;
+    
+    // Check if user is admin
+    if (req.session.isAdmin) {
+      // Admin can see all teams
+      teams = await getAllTeams();
+    } else {
+      // Regular users can only see teams they're part of
+      teams = await getUserTeams(req.session.userId);
+    }
+
     res.json(teams);
   } catch (err) {
     console.error('Get teams error:', err);
@@ -42,6 +52,11 @@ exports.createTeam = async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized - No session found' });
+    }
+
+    // Only admins can create teams
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can create teams' });
     }
 
     const [team] = await createTeam(name, req.session.userId);
@@ -67,6 +82,11 @@ exports.updateTeam = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    // Only admins can update teams
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can update teams' });
+    }
+
     const [team] = await updateTeam(id, name);
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
@@ -78,13 +98,17 @@ exports.updateTeam = async (req, res) => {
   }
 };
 
-// Updated deleteTeam function with better error handling
 exports.deleteTeam = async (req, res) => {
   const { id } = req.params;
   
   try {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Only admins can delete teams
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can delete teams' });
     }
 
     console.log(`Attempting to delete team with ID: ${id}`);
@@ -100,7 +124,6 @@ exports.deleteTeam = async (req, res) => {
   } catch (err) {
     console.error('Delete team error:', err);
     
-    // Handle specific database constraint errors
     if (err.code === '23503') {
       res.status(400).json({ 
         message: 'Cannot delete team due to existing dependencies. Please try again.' 
@@ -111,7 +134,6 @@ exports.deleteTeam = async (req, res) => {
   }
 };
 
-// New member management functions
 exports.getTeamMembers = async (req, res) => {
   const { id } = req.params;
   
@@ -137,6 +159,11 @@ exports.addTeamMembers = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    // Only admins can add team members
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can add team members' });
+    }
+
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({ message: 'userIds array is required' });
     }
@@ -145,7 +172,7 @@ exports.addTeamMembers = async (req, res) => {
     res.json({ message: 'Members added successfully' });
   } catch (err) {
     console.error('Add team members error:', err);
-    if (err.code === '23505') { // Duplicate key error
+    if (err.code === '23505') {
       res.status(400).json({ message: 'One or more users are already members of this team' });
     } else {
       res.status(500).json({ message: 'Server error' });
@@ -159,6 +186,11 @@ exports.removeTeamMember = async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Only admins can remove team members
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can remove team members' });
     }
 
     const deleted = await removeTeamMember(id, userId);

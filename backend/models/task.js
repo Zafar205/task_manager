@@ -45,6 +45,20 @@ const getTasksByUser = async (user_id) => {
     .where('tasks.assigned_to', user_id);
 };
 
+// New function for user tasks in specific team
+const getTasksByUserAndTeam = async (user_id, team_id) => {
+  return knex('tasks')
+    .select(
+      'tasks.*',
+      'teams.name as team_name',
+      'users.email as assignee_email'
+    )
+    .leftJoin('teams', 'tasks.team_id', 'teams.id')
+    .leftJoin('users', 'tasks.assigned_to', 'users.id')
+    .where('tasks.assigned_to', user_id)
+    .where('tasks.team_id', team_id);
+};
+
 const updateTask = async (id, updates) => {
   return knex('tasks')
     .where({ id })
@@ -61,6 +75,7 @@ module.exports = {
   getAllTasks,
   getTasksByTeam,
   getTasksByUser,
+  getTasksByUserAndTeam,
   updateTask,
   deleteTask
 };
