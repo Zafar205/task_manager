@@ -34,24 +34,25 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Enhanced session configuration
+// Fixed session configuration for cross-origin
 app.use(session({
   store: new pgSession({ 
     pool,
     createTableIfMissing: true,
     tableName: 'session'
   }),
-  name: 'taskmanager.sid', // Custom session name
+  name: 'taskmanager.sid',
   secret: process.env.SESSION_SECRET || 'fallback-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
-  rolling: true, // Reset expiration on activity
+  rolling: true,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Important for cross-origin
-    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    // Remove domain setting - let browser handle it automatically
+    // domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
   }
 }));
 
@@ -61,7 +62,9 @@ app.use((req, res, next) => {
     sessionID: req.sessionID,
     session: req.session,
     cookies: req.headers.cookie,
-    origin: req.headers.origin
+    origin: req.headers.origin,
+    method: req.method,
+    url: req.url
   });
   next();
 });
@@ -81,7 +84,8 @@ app.get('/api/session-test', (req, res) => {
     sessionID: req.sessionID,
     session: req.session,
     user: req.session?.user || null,
-    cookies: req.headers.cookie
+    cookies: req.headers.cookie,
+    isAuthenticated: !!req.session?.user
   });
 });
 
