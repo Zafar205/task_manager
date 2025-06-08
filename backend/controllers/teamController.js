@@ -13,22 +13,21 @@ const {
 
 exports.getTeams = async (req, res) => {
   try {
-    console.log('Get teams - Session:', req.session);
-    console.log('Get teams - Session ID:', req.sessionID);
+    console.log('Get teams - User:', req.user);
     
-    if (!req.session.userId) {
-      return res.status(401).json({ message: 'Unauthorized - No session found' });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized - No user found' });
     }
 
     let teams;
     
     // Check if user is admin
-    if (req.session.isAdmin) {
+    if (req.user.is_admin) {
       // Admin can see all teams
       teams = await getAllTeams();
     } else {
       // Regular users can only see teams they're part of
-      teams = await getUserTeams(req.session.userId);
+      teams = await getUserTeams(req.user.id);
     }
 
     res.json(teams);
@@ -39,8 +38,7 @@ exports.getTeams = async (req, res) => {
 };
 
 exports.createTeam = async (req, res) => {
-  console.log('Create team - Session:', req.session);
-  console.log('Create team - Session ID:', req.sessionID);
+  console.log('Create team - User:', req.user);
   console.log('Create team - Body:', req.body);
   
   const errors = validationResult(req);
@@ -50,16 +48,16 @@ exports.createTeam = async (req, res) => {
 
   const { name } = req.body;
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: 'Unauthorized - No session found' });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized - No user found' });
     }
 
     // Only admins can create teams
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can create teams' });
     }
 
-    const [team] = await createTeam(name, req.session.userId);
+    const [team] = await createTeam(name, req.user.id);
     console.log('Team created:', team);
     res.status(201).json(team);
   } catch (err) {
@@ -78,12 +76,12 @@ exports.updateTeam = async (req, res) => {
   const { name } = req.body;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can update teams
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can update teams' });
     }
 
@@ -102,12 +100,12 @@ exports.deleteTeam = async (req, res) => {
   const { id } = req.params;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can delete teams
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can delete teams' });
     }
 
@@ -138,7 +136,7 @@ exports.getTeamMembers = async (req, res) => {
   const { id } = req.params;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -155,12 +153,12 @@ exports.addTeamMembers = async (req, res) => {
   const { userIds } = req.body;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can add team members
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can add team members' });
     }
 
@@ -184,12 +182,12 @@ exports.removeTeamMember = async (req, res) => {
   const { id, userId } = req.params;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can remove team members
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can remove team members' });
     }
 

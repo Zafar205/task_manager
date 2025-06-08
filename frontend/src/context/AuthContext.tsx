@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL, getAuthToken, setAuthToken, removeAuthToken, getApiHeaders } from '../config/api';
 
 interface User {
   id: number;
@@ -8,7 +9,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: User) => void;
+  login: (userData: User, token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -29,26 +30,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage for user data on app load
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        localStorage.removeItem('user');
-      }
+    // Check if token exists and validate it
+    const token = getAuthToken();
+    if (token) {
+      validateToken(token);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+  const validateToken = async (token: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+        headers: getApiHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+        } else {
+          removeAuthToken();
+        }
+      } else {
+        removeAuthToken();
+      }
+    } catch (error) {
+      console.error('Token validation error:', error);
+      removeAuthToken();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const login = (userData: User, token: string) => {
+    setUser(userData);
+    setAuthToken(token);
+  };
+
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/users/logout`, {
+        method: 'POST',
+        headers: getApiHeaders()
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      removeAuthToken();
+    }
   };
 
   const value = {

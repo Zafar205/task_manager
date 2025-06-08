@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const knex = require('../db');
 const authController = require('../controllers/authController');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,9 +25,13 @@ router.post(
   authController.login
 );
 
-router.get('/', async (req, res) => {
+router.post('/logout', authController.logout);
+
+router.get('/me', authenticateToken, authController.me);
+
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 

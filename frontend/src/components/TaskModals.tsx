@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, getApiHeaders } from '../config/api';
 
 interface Task {
   id: number;
@@ -66,7 +66,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users`, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (res.ok) {
         const data = await res.json();
@@ -93,15 +93,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     try {
       const taskData = {
         ...formData,
-        team_id: teamId,
-        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
+        team_id: teamId,        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
       };
 
       const res = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData),
-        credentials: 'include'
+        headers: getApiHeaders(),
+        body: JSON.stringify(taskData)
       });
 
       if (!res.ok) {
@@ -230,8 +228,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
         due_date: task.due_date ? task.due_date.split('T')[0] : '',
         assigned_to: task.assigned_to?.toString() || ''
       });
-    }
-  }, [task]);
+    }  }, [task]);
 
   useEffect(() => {
     if (isOpen) {
@@ -242,7 +239,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users`, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (res.ok) {
         const data = await res.json();
@@ -272,13 +269,10 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       const taskData = {
         ...formData,
         assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
-      };
-
-      const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
+      };      const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData),
-        credentials: 'include'
+        headers: getApiHeaders(),
+        body: JSON.stringify(taskData)
       });
 
       if (!res.ok) {
@@ -397,10 +391,9 @@ export const DeleteTaskModal: React.FC<DeleteTaskModalProps> = ({
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
+    try {      const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: getApiHeaders()
       });
 
       if (!res.ok) {

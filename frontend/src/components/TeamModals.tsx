@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { CreateTaskModal } from './TaskModals';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, getApiHeaders } from '../config/api';
 
 interface Team {
   id: number;
@@ -22,6 +22,7 @@ interface EditTeamModalProps {
   team: Team | null;
   onTeamUpdated: () => void;
 }
+
 
 interface DeleteTeamModalProps {
   isOpen: boolean;
@@ -50,14 +51,11 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-
-    try {
+    setError('');    try {
       const res = await fetch(`${API_BASE_URL}/api/teams`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: teamName }),
-        credentials: 'include'
+        headers: getApiHeaders(),
+        body: JSON.stringify({ name: teamName })
       });
 
       if (!res.ok) {
@@ -137,19 +135,18 @@ export const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
     if (!team) return;
     
     setLoading(true);
-    try {
-      // Fetch team tasks
+    try {      // Fetch team tasks
       const tasksRes = await fetch(`${API_BASE_URL}/api/tasks?team_id=${team.id}`, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (tasksRes.ok) {
         const tasks = await tasksRes.json();
         setTeamTasks(tasks);
       }
 
-      // Fetch team members (you'll need to implement this endpoint)
+      // Fetch team members
       const membersRes = await fetch(`${API_BASE_URL}/api/teams/${team.id}/members`, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (membersRes.ok) {
         const members = await membersRes.json();
@@ -373,11 +370,10 @@ export const AddMembersModal: React.FC<AddMembersModalProps> = ({
       fetchAvailableUsers();
     }
   }, [isOpen]);
-
   const fetchAvailableUsers = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users`, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (res.ok) {
         const users = await res.json();
@@ -406,15 +402,13 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   setLoading(true);
   setError('');
-
   try {
     console.log('Sending request:', { userIds: selectedUsers }); // Debug log
 
     const res = await fetch(`${API_BASE_URL}/api/teams/${teamId}/members`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userIds: selectedUsers }),
-      credentials: 'include'
+      headers: getApiHeaders(),
+      body: JSON.stringify({ userIds: selectedUsers })
     });
 
     console.log('Response status:', res.status); // Debug log
@@ -507,12 +501,10 @@ export const EditTeamModal: React.FC<EditTeamModalProps> = ({
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}`, {
+    try {      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: teamName }),
-        credentials: 'include'
+        headers: getApiHeaders(),
+        body: JSON.stringify({ name: teamName })
       });
 
       if (!res.ok) {
@@ -582,10 +574,9 @@ export const DeleteTeamModal: React.FC<DeleteTeamModalProps> = ({
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}`, {
+    try {      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: getApiHeaders()
       });
 
       if (!res.ok) {

@@ -11,29 +11,29 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <ProtectedRoute>
                 <Home />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/auth/signup" 
+          <Route
+            path="/auth/signup"
             element={
               <AuthGuard>
                 <Signup />
               </AuthGuard>
-            } 
+            }
           />
-          <Route 
-            path="/auth/signin" 
+          <Route
+            path="/auth/signin"
             element={
               <AuthGuard>
                 <Signin />
               </AuthGuard>
-            } 
+            }
           />
         </Routes>
       </BrowserRouter>

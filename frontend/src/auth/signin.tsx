@@ -13,7 +13,6 @@ const Signin: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -31,9 +30,13 @@ const Signin: React.FC = () => {
         return;
       }
       
-      const userData = await res.json();
-      login(userData);
-      navigate("/");
+      const data = await res.json();
+      if (data.success && data.token && data.user) {
+        login(data.user, data.token);
+        navigate("/");
+      } else {
+        setError("Invalid response from server");
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {

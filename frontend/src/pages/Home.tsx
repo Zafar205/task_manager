@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { CreateTeamModal, EditTeamModal, DeleteTeamModal, TeamDetailsModal } from "../components/TeamModals";
 import { EditTaskModal, DeleteTaskModal } from "../components/TaskModals";
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, getApiHeaders } from '../config/api';
 
 interface Team {
   id: number;
@@ -44,12 +44,11 @@ const Home: React.FC = () => {
   // Filter states
   const [taskSearch, setTaskSearch] = useState('');
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('');
-
   // Fetch teams from backend
   const fetchTeams = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/teams`, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (res.ok) {
         const data = await res.json();
@@ -71,7 +70,7 @@ const Home: React.FC = () => {
         : `${API_BASE_URL}/api/tasks`;
       
       const res = await fetch(url, {
-        credentials: 'include'
+        headers: getApiHeaders()
       });
       if (res.ok) {
         const data = await res.json();

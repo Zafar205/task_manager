@@ -4,13 +4,14 @@ const {
   getAllTasks,
   getTasksByTeam,
   getTasksByUser,
+  getTasksByUserAndTeam,
   updateTask,
   deleteTask
 } = require('../models/task');
 
 exports.getTasks = async (req, res) => {
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -18,7 +19,7 @@ exports.getTasks = async (req, res) => {
     let tasks;
 
     // Check if user is admin
-    if (req.session.isAdmin) {
+    if (req.user.is_admin) {
       // Admin can see all tasks or filter by team
       if (team_id) {
         tasks = await getTasksByTeam(team_id);
@@ -29,10 +30,10 @@ exports.getTasks = async (req, res) => {
       // Regular users can only see their assigned tasks
       if (team_id) {
         // Get user's tasks for a specific team they're part of
-        tasks = await getTasksByUserAndTeam(req.session.userId, team_id);
+        tasks = await getTasksByUserAndTeam(req.user.id, team_id);
       } else {
         // Get all tasks assigned to this user
-        tasks = await getTasksByUser(req.session.userId);
+        tasks = await getTasksByUser(req.user.id);
       }
     }
     
@@ -52,12 +53,12 @@ exports.createTask = async (req, res) => {
   const { title, description, due_date, team_id, assigned_to } = req.body;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can create tasks
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can create tasks' });
     }
 
@@ -79,12 +80,12 @@ exports.updateTask = async (req, res) => {
   const updates = req.body;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can update tasks
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can update tasks' });
     }
 
@@ -103,12 +104,12 @@ exports.deleteTask = async (req, res) => {
   const { id } = req.params;
   
   try {
-    if (!req.session.userId) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Only admins can delete tasks
-    if (!req.session.isAdmin) {
+    if (!req.user.is_admin) {
       return res.status(403).json({ message: 'Only admins can delete tasks' });
     }
 

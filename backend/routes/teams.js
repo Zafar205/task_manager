@@ -1,23 +1,18 @@
 const express = require('express');
 const { body } = require('express-validator');
 const teamController = require('../controllers/teamController');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Debug route
-router.get('/debug-session', (req, res) => {
-  res.json({
-    session: req.session,
-    sessionID: req.sessionID,
-    userId: req.session.userId,
-    cookies: req.headers.cookie
-  });
-});
+// All routes require authentication
+router.use(authenticateToken);
 
 router.get('/', teamController.getTeams);
 
 router.post(
   '/',
+  requireAdmin,
   [
     body('name').notEmpty().withMessage('Team name is required'),
   ],
@@ -26,24 +21,26 @@ router.post(
 
 router.put(
   '/:id',
+  requireAdmin,
   [
     body('name').notEmpty().withMessage('Team name is required'),
   ],
   teamController.updateTeam
 );
 
-router.delete('/:id', teamController.deleteTeam);
+router.delete('/:id', requireAdmin, teamController.deleteTeam);
 
 // Team members routes
 router.get('/:id/members', teamController.getTeamMembers);
 router.post(
   '/:id/members',
+  requireAdmin,
   [
     body('userIds').isArray({ min: 1 }).withMessage('userIds must be a non-empty array'),
     body('userIds.*').isNumeric().withMessage('Each user ID must be a number'),
   ],
   teamController.addTeamMembers
 );
-router.delete('/:id/members/:userId', teamController.removeTeamMember);
+router.delete('/:id/members/:userId', requireAdmin, teamController.removeTeamMember);
 
 module.exports = router;

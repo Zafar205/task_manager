@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const { createUser, findUserByEmail } = require('../models/user');
+const { generateToken } = require('../utils/jwt');
 
 exports.register = async (req, res) => {
   console.log('Register request received:', req.body);
@@ -20,25 +21,31 @@ exports.register = async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
     const [user] = await createUser(email, password_hash, is_admin || false);
     
-    // Store user info in session and force save
-    req.session.userId = user.id;
-    req.session.userEmail = user.email;
-    req.session.isAdmin = user.is_admin;
+    // Generate JWT token
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      is_admin: user.is_admin
+    });
     
-    console.log('Session after register:', req.session);
+    console.log('User registered successfully:', user.email);
     
-    // Force session save
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ message: 'Session error' });
+    res.status(201).json({ 
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user.id, 
+        email: user.email, 
+        is_admin: user.is_admin 
       }
-      console.log('Session saved successfully');
-      res.status(201).json({ id: user.id, email: user.email, is_admin: user.is_admin });
     });
   } catch (err) {
     console.error('Register error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error' 
+    });
   }
 };
 
@@ -52,32 +59,72 @@ exports.login = async (req, res) => {
   try {
     const user = await findUserByEmail(email);
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid credentials' 
+      });
     }
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid credentials' 
+      });
     }
 
-    // Store user info in session and force save
-    req.session.userId = user.id;
-    req.session.userEmail = user.email;
-    req.session.isAdmin = user.is_admin;
+    // Generate JWT token
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      is_admin: user.is_admin
+    });
     
-    console.log('Session after login:', req.session);
+    console.log('User logged in successfully:', user.email);
     
-    // Force session save
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ message: 'Session error' });
+    res.json({ 
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id, 
+        email: user.email, 
+        is_admin: user.is_admin 
       }
-      console.log('Session saved successfully');
-      res.json({ id: user.id, email: user.email, is_admin: user.is_admin });
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error' 
+    });
+  }
+};
+
+exports.logout = async (req, res) => {
+  // With JWT, logout is handled client-side by removing the token
+  res.json({ 
+    success: true,
+    message: 'Logout successful' 
+  });
+};
+
+exports.me = async (req, res) => {
+  // This endpoint returns current user info (requires authentication)
+  try {
+    res.json({
+      success: true,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        is_admin: req.user.is_admin
+      }
+    });
+  } catch (err) {
+    console.error('Me endpoint error:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error' 
+    });
   }
 };

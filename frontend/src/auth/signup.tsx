@@ -17,7 +17,6 @@ const Signup: React.FC = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -41,9 +40,13 @@ const Signup: React.FC = () => {
         return;
       }
       
-      const userData = await res.json();
-      login(userData);
-      navigate("/");
+      const data = await res.json();
+      if (data.success && data.token && data.user) {
+        login(data.user, data.token);
+        navigate("/");
+      } else {
+        setError("Invalid response from server");
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
